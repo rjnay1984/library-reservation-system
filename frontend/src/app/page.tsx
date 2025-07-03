@@ -1,5 +1,3 @@
 export default function Home() {
-  return (
-<main>frontend</main>
-  );
+  return <main>frontend</main>;
 }
