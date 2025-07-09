@@ -1,9 +1,18 @@
-import { Button } from '@/components/ui/button';
+import { SignIn } from '@/components/sign-in';
+import SignOut from '@/components/sign-out';
+import { auth } from '@/lib/auth';
+import { headers } from 'next/headers';
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   return (
     <main>
-      frontend <Button>click me</Button>
+      <pre>{JSON.stringify(session, null, 2)}</pre>
+      <SignIn />
+      <SignOut />
     </main>
   );
 }
