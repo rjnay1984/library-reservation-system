@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrate": "npx @better-auth/cli migrate"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
