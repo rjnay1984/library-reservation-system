@@ -21,6 +21,6 @@ describe('HomePage', () => {
     render(result);
 
     expect(screen.getByTestId('home-component')).toBeInTheDocument();
-    expect(screen.getByText('Mocked Home Component')).toBeInTheDocument();
+    expect(screen.getByText('Mocked Home Componentt')).toBeInTheDocument();
   });
 });
