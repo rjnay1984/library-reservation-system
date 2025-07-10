@@ -5,8 +5,13 @@ on:
     branches: ["main"]
 
 jobs:
-  build:
+  pr-check:
     runs-on: ubuntu-latest
+    env:
+      BETTER_AUTH_SECRET: SZXsmzu6o4PpHcGT7LIQFyt0lQ8AfLlo
+      BETTER_AUTH_URL: http://localhost:3000 #Base URL of your app
+      AUTH_URL: http://localhost:9000 #Base URL of your authentik instance
+      NEXT_PUBLIC_AUTH_URL: http://localhost:9000 #Base URL of your authentik instance
     defaults:
       run:
         working-directory: ./frontend
