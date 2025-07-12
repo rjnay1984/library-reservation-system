@@ -10,6 +10,17 @@ builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer");
 
 builder.Services.AddAuthorization();
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("IsAdmin", policy => policy.RequireClaim("groups", "authentik Admins"));
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("IsStaff", policy => policy.RequireClaim("groups", "Library Staff"));
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("IsAdminOrStaff", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasClaim("groups", "authentik Admins") ||
+            context.User.HasClaim("groups", "Library Staff")));
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -48,6 +59,12 @@ app.MapGet("/public", () => new { Message = "This is a public endpoint." });
 
 app.MapGet("/private", () => new { Message = "This is a private endpoint." })
 .RequireAuthorization();
+app.MapGet("/staff", () => new { Message = "This is a staff endpoint." })
+.RequireAuthorization("IsStaff");
+app.MapGet("/admin", () => new { Message = "This is an admin endpoint." })
+.RequireAuthorization("IsAdmin");
+app.MapGet("/either", () => new { Message = "This is an either endpoint." })
+.RequireAuthorization("IsAdminOrStaff");
 
 app.Run();
 
