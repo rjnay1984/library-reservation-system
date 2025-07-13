@@ -1,13 +1,35 @@
 import { betterAuth } from 'better-auth';
 import { genericOAuth } from 'better-auth/plugins';
-import Database from 'better-sqlite3';
+import { Pool } from 'pg';
+import z from 'zod';
+
+const userGroupsSchema = z.preprocess((val: string[]) => {
+  return val.join(', ');
+}, z.string().nullable());
 
 export const auth = betterAuth({
-  database: new Database('./sqlite.db'),
+  database: new Pool({
+    connectionString: 'postgres://postgres:postgres@localhost:5433/session_db',
+  }),
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user) => {
+          return {
+            data: {
+              ...user,
+              groups:
+                'groups' in user ? userGroupsSchema.parse(user.groups) : null,
+            },
+          };
+        },
+      },
+    },
+  },
   user: {
     additionalFields: {
       groups: {
-        type: 'string[]',
+        type: 'string',
         required: false,
         input: false,
       },
@@ -24,11 +46,13 @@ export const auth = betterAuth({
           discoveryUrl: `${process.env.AUTH_URL}/application/o/library/.well-known/openid-configuration`,
           redirectURI: `http://localhost:3000/api/auth/oauth2/callback/2`,
           overrideUserInfo: true,
+          scopes: ['openid', 'profile', 'email', 'offline_access'],
           mapProfileToUser: async (profile) => {
-            console.log('Mapping profile to user:', profile);
             return {
               ...profile,
-              groups: profile.groups ? profile.groups.join(',') : '',
+              groups: profile.groups
+                ? userGroupsSchema.parse(profile.groups)
+                : '',
             };
           },
         },

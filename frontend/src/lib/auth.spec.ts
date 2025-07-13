@@ -1,26 +1,35 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import Database from 'better-sqlite3';
 
 // Store original environment
 const originalAuthUrl = process.env.AUTH_URL;
 
-// Mock better-sqlite3
-vi.mock('better-sqlite3', () => {
-  const mockDatabase = {
-    prepare: vi.fn().mockReturnValue({
-      run: vi.fn(),
-      get: vi.fn(),
-      all: vi.fn(),
-    }),
-    exec: vi.fn(),
-    close: vi.fn(),
-    pragma: vi.fn(),
-  };
+// Mock pg Pool
+const mockPoolInstance = {
+  connect: vi.fn(),
+  query: vi.fn(),
+  end: vi.fn(),
+};
+const mockPool = vi.fn(() => mockPoolInstance);
+vi.mock('pg', () => ({
+  Pool: mockPool,
+}));
 
-  return {
-    default: vi.fn(() => mockDatabase),
-  };
+// Mock zod
+const mockZodPreprocess = vi.fn();
+const mockZodString = vi.fn().mockReturnValue({
+  nullable: vi.fn().mockReturnValue({ parse: vi.fn() }),
 });
+const mockZodSchema = {
+  parse: vi.fn(),
+};
+mockZodPreprocess.mockReturnValue(mockZodSchema);
+
+vi.mock('zod', () => ({
+  default: {
+    preprocess: mockZodPreprocess,
+    string: mockZodString,
+  },
+}));
 
 // Mock better-auth
 const mockBetterAuth = vi.fn();
@@ -52,6 +61,14 @@ describe('Auth Configuration', () => {
     mockGenericOAuth.mockReturnValue({
       id: 'generic-oauth',
     });
+
+    // Setup zod schema mock to return processed values
+    mockZodSchema.parse.mockImplementation((val) => {
+      if (Array.isArray(val)) {
+        return val.join(', ');
+      }
+      return val ? String(val) : '';
+    });
   });
 
   afterEach(() => {
@@ -59,11 +76,14 @@ describe('Auth Configuration', () => {
     vi.resetModules();
   });
 
-  test('should initialize database with correct path', async () => {
+  test('should initialize database with correct connection string', async () => {
     // Import after mocks are set up
     await import('./auth');
 
-    expect(Database).toHaveBeenCalledWith('./sqlite.db');
+    expect(mockPool).toHaveBeenCalledWith({
+      connectionString:
+        'postgres://postgres:postgres@localhost:5433/session_db',
+    });
   });
 
   test('should call betterAuth with correct configuration', async () => {
@@ -72,10 +92,17 @@ describe('Auth Configuration', () => {
     expect(mockBetterAuth).toHaveBeenCalledWith(
       expect.objectContaining({
         database: expect.any(Object),
+        databaseHooks: {
+          user: {
+            create: {
+              before: expect.any(Function),
+            },
+          },
+        },
         user: {
           additionalFields: {
             groups: {
-              type: 'string[]',
+              type: 'string',
               required: false,
               input: false,
             },
@@ -100,6 +127,7 @@ describe('Auth Configuration', () => {
             'http://localhost:8080/application/o/library/.well-known/openid-configuration',
           redirectURI: 'http://localhost:3000/api/auth/oauth2/callback/2',
           overrideUserInfo: true,
+          scopes: ['openid', 'profile', 'email', 'offline_access'],
           mapProfileToUser: expect.any(Function),
         },
       ],
@@ -140,20 +168,12 @@ describe('Auth Configuration', () => {
         groups: ['admin', 'user'],
       };
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
       const result = await mapProfileToUser(mockProfile);
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Mapping profile to user:',
-        mockProfile,
-      );
       expect(result).toEqual({
         ...mockProfile,
-        groups: 'admin,user',
+        groups: 'admin, user',
       });
-
-      consoleSpy.mockRestore();
     });
 
     test('should map profile without groups to empty string', async () => {
@@ -162,17 +182,12 @@ describe('Auth Configuration', () => {
         email: 'test@example.com',
         name: 'Test User',
       };
-
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
       const result = await mapProfileToUser(mockProfile);
 
       expect(result).toEqual({
         ...mockProfile,
         groups: '',
       });
-
-      consoleSpy.mockRestore();
     });
 
     test('should map profile with null groups to empty string', async () => {
@@ -183,16 +198,12 @@ describe('Auth Configuration', () => {
         groups: null,
       };
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
       const result = await mapProfileToUser(mockProfile);
 
       expect(result).toEqual({
         ...mockProfile,
         groups: '',
       });
-
-      consoleSpy.mockRestore();
     });
 
     test('should map profile with empty groups array to empty string', async () => {
@@ -203,16 +214,12 @@ describe('Auth Configuration', () => {
         groups: [],
       };
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
       const result = await mapProfileToUser(mockProfile);
 
       expect(result).toEqual({
         ...mockProfile,
         groups: '',
       });
-
-      consoleSpy.mockRestore();
     });
   });
 
@@ -225,5 +232,157 @@ describe('Auth Configuration', () => {
     expect(auth.api).toHaveProperty('getSession');
     expect(auth.api).toHaveProperty('signIn');
     expect(auth.api).toHaveProperty('signOut');
+  });
+
+  test('should configure betterAuth with databaseHooks', async () => {
+    await import('./auth');
+
+    const betterAuthConfig = mockBetterAuth.mock.calls[0][0];
+    expect(betterAuthConfig).toHaveProperty('databaseHooks');
+    expect(betterAuthConfig.databaseHooks).toHaveProperty('user');
+    expect(betterAuthConfig.databaseHooks.user).toHaveProperty('create');
+    expect(betterAuthConfig.databaseHooks.user.create).toHaveProperty('before');
+    expect(typeof betterAuthConfig.databaseHooks.user.create.before).toBe(
+      'function',
+    );
+  });
+
+  describe('userGroupsSchema preprocessing', () => {
+    beforeEach(async () => {
+      await import('./auth');
+    });
+
+    test('should call zod preprocess with correct function', () => {
+      expect(mockZodPreprocess).toHaveBeenCalledWith(
+        expect.any(Function),
+        expect.any(Object),
+      );
+    });
+
+    test('should join array values with comma and space', () => {
+      const preprocessFn = mockZodPreprocess.mock.calls[0][0];
+      const result = preprocessFn(['admin', 'user', 'moderator']);
+      expect(result).toBe('admin, user, moderator');
+    });
+
+    test('should handle empty array', () => {
+      const preprocessFn = mockZodPreprocess.mock.calls[0][0];
+      const result = preprocessFn([]);
+      expect(result).toBe('');
+    });
+
+    test('should handle single item array', () => {
+      const preprocessFn = mockZodPreprocess.mock.calls[0][0];
+      const result = preprocessFn(['admin']);
+      expect(result).toBe('admin');
+    });
+
+    test('should handle non-array values gracefully', () => {
+      const preprocessFn = mockZodPreprocess.mock.calls[0][0];
+
+      // Test with string (should still work due to zod's preprocessing)
+      expect(() => preprocessFn('not-an-array')).toThrow();
+    });
+
+    test('should handle undefined values', () => {
+      const preprocessFn = mockZodPreprocess.mock.calls[0][0];
+      expect(() => preprocessFn(undefined)).toThrow();
+    });
+  });
+
+  test('should configure zod schema correctly', async () => {
+    await import('./auth');
+
+    expect(mockZodString).toHaveBeenCalled();
+    expect(mockZodString().nullable).toHaveBeenCalled();
+  });
+
+  describe('databaseHooks.user.create.before', () => {
+    let beforeHook: (
+      user: Record<string, unknown>,
+    ) => Promise<{ data: Record<string, unknown> }>;
+
+    beforeEach(async () => {
+      await import('./auth');
+      const betterAuthConfig = mockBetterAuth.mock.calls[0][0];
+      beforeHook = betterAuthConfig.databaseHooks.user.create.before;
+    });
+
+    test('should process user with groups', async () => {
+      const mockUser = {
+        id: 'user123',
+        email: 'test@example.com',
+        groups: ['admin', 'user'],
+      };
+
+      mockZodSchema.parse.mockReturnValue('admin, user');
+
+      const result = await beforeHook(mockUser);
+
+      expect(result).toEqual({
+        data: {
+          ...mockUser,
+          groups: 'admin, user',
+        },
+      });
+      expect(mockZodSchema.parse).toHaveBeenCalledWith(['admin', 'user']);
+    });
+
+    test('should handle user without groups', async () => {
+      const mockUser = {
+        id: 'user123',
+        email: 'test@example.com',
+      };
+
+      const result = await beforeHook(mockUser);
+
+      expect(result).toEqual({
+        data: {
+          ...mockUser,
+          groups: null,
+        },
+      });
+      expect(mockZodSchema.parse).not.toHaveBeenCalled();
+    });
+
+    test('should handle user with null groups', async () => {
+      const mockUser = {
+        id: 'user123',
+        email: 'test@example.com',
+        groups: null,
+      };
+
+      mockZodSchema.parse.mockReturnValue(null);
+
+      const result = await beforeHook(mockUser);
+
+      expect(result).toEqual({
+        data: {
+          ...mockUser,
+          groups: null,
+        },
+      });
+      expect(mockZodSchema.parse).toHaveBeenCalledWith(null);
+    });
+
+    test('should handle user with empty groups array', async () => {
+      const mockUser = {
+        id: 'user123',
+        email: 'test@example.com',
+        groups: [],
+      };
+
+      mockZodSchema.parse.mockReturnValue('');
+
+      const result = await beforeHook(mockUser);
+
+      expect(result).toEqual({
+        data: {
+          ...mockUser,
+          groups: '',
+        },
+      });
+      expect(mockZodSchema.parse).toHaveBeenCalledWith([]);
+    });
   });
 });

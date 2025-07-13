@@ -23,6 +23,7 @@ export default async function Home() {
       {session ? (
         <>
           <h2>Welcome back, {session.user.name}!</h2>
+          {session.user.groups && <div>{session.user.groups}</div>}
           {token && token.accessToken && (
             <CopyTokenButton token={token.accessToken} className="mr-2" />
           )}
