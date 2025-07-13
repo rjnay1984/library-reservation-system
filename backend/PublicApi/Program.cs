@@ -1,3 +1,5 @@
+using PublicApi.Endpoints;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -36,35 +38,9 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Fuckin Cold"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            10,
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
-app.MapGet("/public", () => new { Message = "This is a public endpoint." });
-
-app.MapGet("/private", () => new { Message = "This is a private endpoint." })
-.RequireAuthorization();
-app.MapGet("/staff", () => new { Message = "This is a staff endpoint." })
-.RequireAuthorization("IsStaff");
-app.MapGet("/admin", () => new { Message = "This is an admin endpoint." })
-.RequireAuthorization("IsAdmin");
-app.MapGet("/either", () => new { Message = "This is an either endpoint." })
-.RequireAuthorization("IsAdminOrStaff");
+app.MapGroup("/")
+    .MapTestEndpoints()
+    .WithTags("Test Endpoints");
 
 app.Run();
 
