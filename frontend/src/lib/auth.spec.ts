@@ -82,7 +82,7 @@ describe('Auth Configuration', () => {
 
     expect(mockPool).toHaveBeenCalledWith({
       connectionString:
-        'postgres://postgres:postgres@localhost:5433/session_db',
+        'postgres://postgres:postgres@session-db:5432/session_db',
     });
   });
 
