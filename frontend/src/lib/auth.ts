@@ -9,7 +9,7 @@ const userGroupsSchema = z.preprocess((val: string[]) => {
 
 export const auth = betterAuth({
   database: new Pool({
-    connectionString: 'postgres://postgres:postgres@localhost:5433/session_db',
+    connectionString: 'postgres://postgres:postgres@session-db:5432/session_db',
   }),
   databaseHooks: {
     user: {
