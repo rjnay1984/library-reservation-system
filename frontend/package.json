@@ -15,7 +15,7 @@
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
     "db:migrate": "npx @better-auth/cli migrate",
-    "prepare": "husky"
+    "prepare": "cd .. && husky frontend/.husky"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
