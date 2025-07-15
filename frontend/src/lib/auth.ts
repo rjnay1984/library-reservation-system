@@ -4,7 +4,11 @@ import { Pool } from 'pg';
 import z from 'zod';
 
 const userGroupsSchema = z.preprocess((val: string[] | null) => {
-  return val ? val.join(', ') : null;
+  if (!val) return null;
+  if (Array.isArray(val)) {
+    return val.join(',');
+  }
+  return val;
 }, z.string().nullable());
 
 export const auth = betterAuth({
