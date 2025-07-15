@@ -1,4 +1,15 @@
 services:
+  library-db:
+    image: postgres:latest
+    ports:
+      - "5434:5432"
+    restart: always
+    volumes:
+      - library-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=library
+      - POSTGRES_PASSWORD=library
+      - POSTGRES_DB=library
   backend:
     build:
       context: .
@@ -18,3 +29,7 @@ services:
     depends_on:
       - postgresql
       - server
+      - library-db
+
+volumes:
+  library-db-data:
