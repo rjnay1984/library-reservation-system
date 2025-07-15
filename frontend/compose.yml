@@ -28,6 +28,7 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
       - AUTH_URL=http://server:9000
       - NEXT_PUBLIC_AUTH_URL=http://localhost:9000
+      - SESSION_DB_URL=postgres://postgres:postgres@session-db:5432/session_db
 
 volumes:
   session-db-data:
