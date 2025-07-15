@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import SignOut from './sign-out';
 import { SignIn } from './sign-in';
+import ProfileMenu from './profile-menu';
 
 export default async function Navigation() {
   const session = await auth.api.getSession({
@@ -12,10 +12,10 @@ export default async function Navigation() {
     <div className="border-b border-b-white py-5 px-3 flex">
       <div className="flex items-center gap-4 ml-auto">
         {session ? (
-          <>
-            <div>Welcome back, {session.user.name}!</div>
-            <SignOut />
-          </>
+          <ProfileMenu
+            name={session.user.name}
+            groups={session.user.groups ?? null}
+          />
         ) : (
           <SignIn />
         )}

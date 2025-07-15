@@ -3,13 +3,13 @@ import { genericOAuth } from 'better-auth/plugins';
 import { Pool } from 'pg';
 import z from 'zod';
 
-const userGroupsSchema = z.preprocess((val: string[]) => {
-  return val.join(', ');
+const userGroupsSchema = z.preprocess((val: string[] | null) => {
+  return val ? val.join(', ') : null;
 }, z.string().nullable());
 
 export const auth = betterAuth({
   database: new Pool({
-    connectionString: 'postgres://postgres:postgres@session-db:5432/session_db',
+    connectionString: process.env.SESSION_DB_URL,
   }),
   databaseHooks: {
     user: {
@@ -60,3 +60,5 @@ export const auth = betterAuth({
     }),
   ],
 });
+
+export type Session = typeof auth.$Infer.Session;
