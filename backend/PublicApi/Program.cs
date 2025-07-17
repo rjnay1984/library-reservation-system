@@ -1,4 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
+using PublicApi.Data;
 using PublicApi.Endpoints;
+using PublicApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddCors();
+builder.Services.AddDbContext<LibraryDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("LibraryDb")));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+// Register services
+builder.Services.AddScoped<IBookService, BookService>();
 
 // Configure JWT Authentication
 builder.Services.AddAuthentication("Bearer")
@@ -41,10 +51,8 @@ app.UseAuthorization();
 app.MapGroup("/")
     .MapTestEndpoints()
     .WithTags("Test Endpoints");
+app.MapGroup("/books")
+    .MapBookEndpoints()
+    .WithTags("Book Endpoints");
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}

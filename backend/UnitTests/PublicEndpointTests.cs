@@ -6,11 +6,10 @@ namespace UnitTests;
 public class PublicEndpointTests
 {
     [Fact]
-    public void PublicEndpointTest()
+    public async Task PublicEndpointTest()
     {
-        Assert.True(true);
-        var response = TestEndpoints.HandleTestEndpoint("Public endpoint accessed.").Result;
-        Assert.NotNull(response);
+        var response = await TestEndpoints.HandleTestEndpoint("Public endpoint accessed.");
+        Assert.NotNull(response.Value);
         Assert.Equal("Public endpoint accessed.", response.Value.Message);
     }
 }

@@ -1,5 +1,3 @@
-using System.Reflection.Metadata;
-
 using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace PublicApi.Endpoints;
