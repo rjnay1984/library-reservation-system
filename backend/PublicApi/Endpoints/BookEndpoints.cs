@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 using PublicApi.Entities;
 using PublicApi.Services;
@@ -19,10 +20,17 @@ public static class BookEndpoints
         return group;
     }
 
-    private static async Task<Ok<IEnumerable<Book>>> GetAllBooks(IBookService bookService)
+    record IBookResponse(int Page, int PerPage, int TotalResults, IEnumerable<Book> Data);
+
+    private static async Task<Ok<IBookResponse>> GetAllBooks(
+         IBookService bookService,
+        [FromHeader(Name = "PerPage")] int? perPage = 20,
+        [FromHeader(Name = "Page")] int? page = 1)
     {
-        var books = await bookService.GetAllBooksAsync();
-        return TypedResults.Ok(books);
+        var totalResults = await bookService.GetTotalBooksCountAsync();
+        var books = await bookService.GetAllBooksAsync(page ?? 1, perPage ?? 20);
+        var response = new IBookResponse(page ?? 1, perPage ?? 20, totalResults, books);
+        return TypedResults.Ok(response);
     }
 
     private static async Task<Results<Ok<Book>, NotFound>> GetBookById(Guid id, IBookService bookService)

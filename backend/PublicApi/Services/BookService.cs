@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
 using PublicApi.Data;
@@ -9,9 +10,20 @@ public class BookService(LibraryDbContext context) : IBookService
 {
     private readonly LibraryDbContext _context = context;
 
-    public async Task<IEnumerable<Book>> GetAllBooksAsync()
+    public async Task<int> GetTotalBooksCountAsync()
     {
-        return await _context.Books.ToListAsync();
+        return await _context.Books.CountAsync();
+    }
+
+    public async Task<IEnumerable<Book>> GetAllBooksAsync(int page, int perPage)
+    {
+        if (page < 1) page = 1;
+        if (perPage < 1) perPage = 20;
+
+        return await _context.Books
+            .Skip((page - 1) * perPage)
+            .Take(perPage)
+            .ToListAsync();
     }
 
     public async Task<Book?> GetBookByIdAsync(Guid id)

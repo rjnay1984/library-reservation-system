@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
+    <!-- Bogus is popping a bunch of super annoying wanrings, ignoring them for now. -->
+    <NoWarn>NU1701</NoWarn>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

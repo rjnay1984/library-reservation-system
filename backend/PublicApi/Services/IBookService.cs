@@ -4,7 +4,8 @@ namespace PublicApi.Services;
 
 public interface IBookService
 {
-    Task<IEnumerable<Book>> GetAllBooksAsync();
+    Task<int> GetTotalBooksCountAsync();
+    Task<IEnumerable<Book>> GetAllBooksAsync(int page, int perPage);
     Task<Book?> GetBookByIdAsync(Guid id);
     Task<Book?> GetBookByIsbnAsync(string isbn);
     Task<Book> CreateBookAsync(Book book);

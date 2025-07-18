@@ -30,10 +30,10 @@ public class BookServiceTests
         await context.SaveChangesAsync();
 
         var service = GetService(context);
-        var books = await service.GetAllBooksAsync();
+        var books = await service.GetAllBooksAsync(1, 10);
 
         Assert.Equal(2, await context.Books.CountAsync());
-        Assert.Equal(2, System.Linq.Enumerable.Count(books));
+        Assert.Equal(2, Enumerable.Count(books));
     }
 
     [Fact]
