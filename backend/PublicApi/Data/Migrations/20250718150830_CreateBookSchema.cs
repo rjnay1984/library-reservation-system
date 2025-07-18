@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace PublicApi.Migrations
+namespace PublicApi.Data.Migrations
 {
     /// <inheritdoc />
     public partial class CreateBookSchema : Migration

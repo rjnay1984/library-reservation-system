@@ -15,8 +15,8 @@ public class LibraryDbContext(DbContextOptions<LibraryDbContext> options) : DbCo
                 var testBook = context.Set<Book>().FirstOrDefault(b => b.Title == "Test Book");
                 if (testBook == null)
                 {
-                    context.Set<Book>().Add(new Book { Title = "Test Book", Author = "Test Author", ISBN = "1234567890", PublishedDate = DateTime.UtcNow.AddYears(-15) });
-                    context.Set<Book>().Add(new Book { Title = "Test Book 2", Author = "Test Author2", ISBN = "0987654321", PublishedDate = DateTime.UtcNow.AddYears(-7) });
+                    List<Book> seedBooks = BookSeedData.Init();
+                    context.Set<Book>().AddRange(seedBooks);
                     context.SaveChanges();
                 }
             })
@@ -25,8 +25,8 @@ public class LibraryDbContext(DbContextOptions<LibraryDbContext> options) : DbCo
                 var testBook = await context.Set<Book>().FirstOrDefaultAsync(b => b.Title == "Test Book", cancellationToken);
                 if (testBook == null)
                 {
-                    context.Set<Book>().Add(new Book { Title = "Test Book", Author = "Test Author", ISBN = "1234567890", PublishedDate = DateTime.UtcNow.AddYears(-15) });
-                    context.Set<Book>().Add(new Book { Title = "Test Book 2", Author = "Test Author2", ISBN = "0987654321", PublishedDate = DateTime.UtcNow.AddYears(-7) });
+                    List<Book> seedBooks = BookSeedData.Init();
+                    context.Set<Book>().AddRange(seedBooks);
                     await context.SaveChangesAsync(cancellationToken);
                 }
             });
