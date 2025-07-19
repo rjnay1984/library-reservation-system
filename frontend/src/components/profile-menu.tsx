@@ -17,7 +17,6 @@ export default async function ProfileMenu({
   name: string;
   groups: string | null;
 }) {
-  debugger;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
