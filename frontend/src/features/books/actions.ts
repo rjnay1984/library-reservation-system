@@ -1,10 +1,12 @@
 import z from 'zod';
 import { bookSchema } from './schemas/bookSchema';
+import { libraryEnv } from '@/lib/env';
 
 const getAllBooksResponseSchema = z.object({
   page: z.number().int().min(1),
   perPage: z.number().int().min(1),
   totalResults: z.number().int(),
+  totalPages: z.number().int().min(1),
   data: z.array(bookSchema),
 });
 
@@ -16,7 +18,7 @@ const getAllBooksResponseSchema = z.object({
  */
 export const getAllBooks = async (page: number = 1, perPage: number = 20) => {
   try {
-    const response = await fetch(`${process.env.API_URL}/books`, {
+    const response = await fetch(`${libraryEnv.API_URL}/books`, {
       headers: {
         'Content-Type': 'application/json',
         PerPage: perPage.toString(),

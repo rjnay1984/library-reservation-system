@@ -32,6 +32,9 @@ vi.mock('../actions', () => ({
 }));
 const mockedGetAllBooks = vi.mocked(getAllBooks);
 
+vi.mock('@/components/ui/pagination');
+vi.mock('@/components/ui/button');
+
 describe('BookList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -40,6 +43,7 @@ describe('BookList', () => {
       totalResults: mockBookData.length,
       page: 1,
       perPage: 10,
+      totalPages: 1,
     });
   });
 
@@ -51,5 +55,38 @@ describe('BookList', () => {
     render(await BookList({ params: { page: 2, perPage: 10 } }));
     expect(screen.getByText('Book List')).toBeInTheDocument();
     expect(mockedGetAllBooks).toBeCalledWith(2, 10);
+  });
+
+  describe('BookList Pagination', () => {
+    it('should render pagination when totalPages is > 2 (page 1)', async () => {
+      mockedGetAllBooks.mockResolvedValueOnce({
+        data: mockBookData,
+        totalResults: mockBookData.length,
+        page: 1,
+        perPage: 10,
+        totalPages: 10,
+      });
+      render(await BookList({ params: { page: 1, perPage: 10 } }));
+      expect(screen.getByTestId('mock-pagination-next')).toBeInTheDocument();
+      expect(
+        screen.getByTestId('mock-pagination-ellipsis'),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId('mock-pagination-previous'),
+      ).not.toBeInTheDocument();
+    });
+    it('should render ellipsis when user is on page 3 or above', async () => {
+      mockedGetAllBooks.mockResolvedValueOnce({
+        data: mockBookData,
+        totalResults: mockBookData.length,
+        page: 3,
+        perPage: 10,
+        totalPages: 10,
+      });
+      render(await BookList({ params: { page: 3, perPage: 10 } }));
+      expect(
+        screen.queryAllByTestId('mock-pagination-ellipsis').length,
+      ).toBeGreaterThan(0);
+    });
   });
 });
