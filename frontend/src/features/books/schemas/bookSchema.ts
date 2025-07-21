@@ -7,3 +7,5 @@ export const bookSchema = z.object({
   publishedDate: z.string(),
   isbn: z.string().length(9),
 });
+
+export type Book = z.infer<typeof bookSchema>;

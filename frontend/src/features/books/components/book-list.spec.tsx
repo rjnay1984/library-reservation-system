@@ -2,6 +2,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import BookList from './book-list';
 import { getAllBooks } from '../actions';
+import { Book } from '../schemas/bookSchema';
 
 const mockBookData = [
   {
@@ -30,12 +31,17 @@ const mockBookData = [
 vi.mock('../actions', () => ({
   getAllBooks: vi.fn(),
 }));
-const mockedGetAllBooks = vi.mocked(getAllBooks);
 
 vi.mock('@/components/ui/pagination');
 vi.mock('@/components/ui/button');
-
+vi.mock('./book-card', () => ({
+  __esModule: true,
+  default: ({ book }: { book: Book }) => (
+    <div data-testid="mock-book-card">{book.title}</div>
+  ),
+}));
 describe('BookList', () => {
+  const mockedGetAllBooks = vi.mocked(getAllBooks);
   beforeEach(() => {
     vi.clearAllMocks();
     mockedGetAllBooks.mockResolvedValue({
@@ -50,11 +56,23 @@ describe('BookList', () => {
   it('should render the book list', async () => {
     render(await BookList({ params: { page: 1, perPage: 10 } }));
     expect(screen.getByText('Book List')).toBeInTheDocument();
+    expect(screen.queryAllByTestId('mock-book-card').length).toBe(3);
   });
   it('should display page 2 results', async () => {
     render(await BookList({ params: { page: 2, perPage: 10 } }));
     expect(screen.getByText('Book List')).toBeInTheDocument();
     expect(mockedGetAllBooks).toBeCalledWith(2, 10);
+  });
+  it('should display no books found when no books are returned', async () => {
+    mockedGetAllBooks.mockResolvedValue({
+      data: [],
+      totalResults: 0,
+      page: 1,
+      perPage: 10,
+      totalPages: 1,
+    });
+    render(await BookList({ params: { page: 1, perPage: 10 } }));
+    expect(screen.getByText('No books found.')).toBeInTheDocument();
   });
 
   describe('BookList Pagination', () => {
@@ -84,9 +102,9 @@ describe('BookList', () => {
         totalPages: 10,
       });
       render(await BookList({ params: { page: 3, perPage: 10 } }));
-      expect(
-        screen.queryAllByTestId('mock-pagination-ellipsis').length,
-      ).toBeGreaterThan(0);
+      expect(screen.queryAllByTestId('mock-pagination-ellipsis').length).toBe(
+        2,
+      );
     });
   });
 });

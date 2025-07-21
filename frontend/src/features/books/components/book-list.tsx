@@ -11,6 +11,7 @@ import {
   PaginationPrevious,
   PaginationLast,
 } from '@/components/ui/pagination';
+import BookCard from './book-card';
 
 export default async function BookList({ params }: { params: Params }) {
   const { page, perPage } = params;
@@ -23,11 +24,19 @@ export default async function BookList({ params }: { params: Params }) {
   } = await getAllBooks(page, perPage);
 
   return (
-    <div>
+    <>
       <h1>Book List</h1>
       <h3>Total Books: {totalResults}</h3>
       {/* Book list content will go here */}
-      <pre data-testid="book-list-pre">{JSON.stringify(books, null, 2)}</pre>
+      {books && books.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full py-5">
+          {books.map((book) => (
+            <BookCard key={book.id} book={book} />
+          ))}
+        </div>
+      ) : (
+        <p>No books found.</p>
+      )}
       {totalPages > 1 && (
         <Pagination>
           <PaginationContent>
@@ -103,6 +112,6 @@ export default async function BookList({ params }: { params: Params }) {
           </PaginationContent>
         </Pagination>
       )}
-    </div>
+    </>
   );
 }

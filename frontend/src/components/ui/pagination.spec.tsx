@@ -1,4 +1,4 @@
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import {
   Pagination,
@@ -18,6 +18,9 @@ vi.mock('@/components/ui/button', () => ({
 }));
 
 describe('Pagination', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
   it('renders correctly', () => {
     render(
       <Pagination>
