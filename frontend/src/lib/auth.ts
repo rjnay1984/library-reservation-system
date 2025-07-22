@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { genericOAuth } from 'better-auth/plugins';
 import { Pool } from 'pg';
 import z from 'zod';
+import { libraryEnv } from './env';
 
 const userGroupsSchema = z.preprocess((val: string[] | null) => {
   if (!val) return null;
@@ -13,7 +14,7 @@ const userGroupsSchema = z.preprocess((val: string[] | null) => {
 
 export const auth = betterAuth({
   database: new Pool({
-    connectionString: process.env.SESSION_DB_URL,
+    connectionString: libraryEnv.SESSION_DB_URL,
   }),
   databaseHooks: {
     user: {
@@ -47,7 +48,7 @@ export const auth = betterAuth({
           clientId: 'bhjwp90QgKR3fpCEPgGYKpVNimgPZsZsoE0RPNRv',
           clientSecret:
             '1nmw9tTwKqllAdl6pfM4Po3GRySh12OVFEKBjZmEDQaQxh3vX9Mz46NmefG2Q8FKMwugNKZY0Htau4Ki3kb8tQVcVVPMwTZ64V45nR8PoT0rQFpJhh9QZrv9IJlKluld',
-          discoveryUrl: `${process.env.AUTH_URL}/application/o/library/.well-known/openid-configuration`,
+          discoveryUrl: `${libraryEnv.AUTH_URL}/application/o/library/.well-known/openid-configuration`,
           redirectURI: `http://localhost:3000/api/auth/oauth2/callback/2`,
           overrideUserInfo: true,
           scopes: ['openid', 'profile', 'email', 'offline_access'],
