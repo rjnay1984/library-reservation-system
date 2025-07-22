@@ -1,64 +1,130 @@
-import { vi, describe, beforeEach, test, expect } from 'vitest';
+import { vi, describe, beforeEach, it, expect } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from '@testing-library/react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuLabel,
-  DropdownMenuPortal,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuCheckboxItem,
 } from './dropdown-menu';
-import { DropdownMenuItem } from '@radix-ui/react-dropdown-menu';
+
+const MockDropdownMenu = () => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <button>Open</button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent className="w-56" align="start">
+      <DropdownMenuLabel>My Account</DropdownMenuLabel>
+      <DropdownMenuGroup>
+        <DropdownMenuItem>Team</DropdownMenuItem>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem>Email</DropdownMenuItem>
+              <DropdownMenuItem>Message</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>More...</DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+        <DropdownMenuItem>
+          New Team
+          <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
+        </DropdownMenuItem>
+      </DropdownMenuGroup>
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
 
 describe('DropdownMenu Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test('renders with default props', async () => {
+  it('renders the dropdown menu with items', async () => {
+    render(<MockDropdownMenu />);
+
+    await userEvent.click(screen.getByText('Open'));
+    await screen.findByRole('menu');
+
+    expect(screen.getByText('My Account')).toBeInTheDocument();
+    expect(screen.getByText('Team')).toBeInTheDocument();
+
+    await userEvent.hover(screen.getByText('Invite users'));
+    const email = await screen.findByText('Email');
+    expect(email).toBeInTheDocument();
+    expect(screen.getByRole('separator')).toBeInTheDocument();
+
+    expect(screen.getByText('Message')).toBeInTheDocument();
+    expect(screen.getByText('More...')).toBeInTheDocument();
+  });
+
+  it('renders the dropdown menu with radio items', async () => {
     render(
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button>Open Menu</button>
+          <button>Open Radio Menu</button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem>
-            <span data-testid="menu-item">Item 1</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Menu Label</DropdownMenuLabel>
+        <DropdownMenuContent className="w-56" align="start">
+          <DropdownMenuLabel>Options</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuRadioGroup value="option1">
+              <DropdownMenuRadioItem value="option1">
+                Option 1
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="option2">
+                Option 2
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>,
     );
-    const button = screen.getByRole('button', { name: /open menu/i });
-    expect(button).toBeInTheDocument();
-    await userEvent.click(button);
-    expect(await screen.findByRole('menu')).toBeInTheDocument();
-    expect(
-      await screen.findByRole('menuitem', { name: /item 1/i }),
-    ).toBeInTheDocument();
-    expect(await screen.findByTestId('menu-item')).toBeInTheDocument();
-    expect(await screen.findByRole('separator')).toBeInTheDocument();
-    expect(await screen.findByText(/menu label/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText('Open Radio Menu'));
+    expect(screen.getByText('Options')).toBeInTheDocument();
+    expect(screen.getByText('Option 1')).toHaveRole('menuitemradio');
+    expect(screen.getByText('Option 2')).toHaveRole('menuitemradio');
   });
 
-  test('renders DropdownMenuPortal with correct data-slot attribute', async () => {
-    // Test that DropdownMenuPortal renders and adds the data-slot attribute
+  it('renders the dropdown menu with checkbox items', async () => {
     render(
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button>Open Menu</button>
+          <button>Open Checkbox Menu</button>
         </DropdownMenuTrigger>
-        <DropdownMenuPortal data-testid="test-portal">
-          <div data-testid="portal-content">Portal content</div>
-        </DropdownMenuPortal>
+        <DropdownMenuContent className="w-56" align="start">
+          <DropdownMenuLabel>Settings</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuCheckboxItem checked={true} onCheckedChange={() => {}}>
+              Setting 1
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuCheckboxItem
+              checked={false}
+              onCheckedChange={() => {}}
+            >
+              Setting 2
+            </DropdownMenuCheckboxItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
       </DropdownMenu>,
     );
 
-    const button = screen.getByRole('button', { name: /open menu/i });
-    await userEvent.click(button);
-    // Verify the content is rendered
-    expect(await screen.findByText('Portal content')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Open Checkbox Menu'));
+    expect(screen.getByText('Settings')).toBeInTheDocument();
+    expect(screen.getByText('Setting 1')).toHaveRole('menuitemcheckbox');
+    expect(screen.getByText('Setting 2')).toHaveRole('menuitemcheckbox');
   });
 });
