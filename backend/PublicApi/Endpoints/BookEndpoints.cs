@@ -11,11 +11,11 @@ public static class BookEndpoints
     public static RouteGroupBuilder MapBookEndpoints(this RouteGroupBuilder group)
     {
         group.MapGet("/", GetAllBooks);
-        group.MapGet("/{id:int}", GetBookById);
+        group.MapGet("/{id}", GetBookById);
         group.MapGet("/isbn/{isbn}", GetBookByIsbn);
         group.MapPost("/", CreateBook).RequireAuthorization("IsStaff");
-        group.MapPut("/{id:int}", UpdateBook).RequireAuthorization("IsStaff");
-        group.MapDelete("/{id:int}", DeleteBook).RequireAuthorization("IsStaff");
+        group.MapPut("/{id}", UpdateBook).RequireAuthorization("IsStaff");
+        group.MapDelete("/{id}", DeleteBook).RequireAuthorization("IsStaff");
 
         return group;
     }
