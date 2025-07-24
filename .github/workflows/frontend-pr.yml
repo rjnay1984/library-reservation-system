@@ -13,6 +13,8 @@ jobs:
       AUTH_URL: http://localhost:9000 #Base URL of your authentik instance
       NEXT_PUBLIC_AUTH_URL: http://localhost:9000 #Base URL of your authentik instance
       NEXT_TELEMETRY_DISABLED: 1
+      API_URL: http://localhost:5000
+      SESSION_DB_URL: http://localhost:5434
     defaults:
       run:
         working-directory: ./frontend
