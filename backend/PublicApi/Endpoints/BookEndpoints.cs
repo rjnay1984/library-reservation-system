@@ -11,25 +11,29 @@ public static class BookEndpoints
     public static RouteGroupBuilder MapBookEndpoints(this RouteGroupBuilder group)
     {
         group.MapGet("/", GetAllBooks);
-        group.MapGet("/{id:int}", GetBookById);
+        group.MapGet("/{id}", GetBookById);
         group.MapGet("/isbn/{isbn}", GetBookByIsbn);
         group.MapPost("/", CreateBook).RequireAuthorization("IsStaff");
-        group.MapPut("/{id:int}", UpdateBook).RequireAuthorization("IsStaff");
-        group.MapDelete("/{id:int}", DeleteBook).RequireAuthorization("IsStaff");
+        group.MapPut("/{id}", UpdateBook).RequireAuthorization("IsStaff");
+        group.MapDelete("/{id}", DeleteBook).RequireAuthorization("IsStaff");
 
         return group;
     }
 
-    record IBookResponse(int Page, int PerPage, int TotalResults, IEnumerable<Book> Data);
+    record IBookResponse(int Page, int PerPage, int TotalResults, int TotalPages, IEnumerable<Book> Data);
 
     private static async Task<Ok<IBookResponse>> GetAllBooks(
          IBookService bookService,
         [FromHeader(Name = "PerPage")] int? perPage = 20,
         [FromHeader(Name = "Page")] int? page = 1)
     {
+        var actualPage = page.HasValue && page < 1 ? 1 : page ?? 1;
+        var actualPerPage = perPage.HasValue && perPage < 1 ? 20 : perPage ?? 20;
+
         var totalResults = await bookService.GetTotalBooksCountAsync();
-        var books = await bookService.GetAllBooksAsync(page ?? 1, perPage ?? 20);
-        var response = new IBookResponse(page ?? 1, perPage ?? 20, totalResults, books);
+        var totalPages = (int)Math.Ceiling((double)totalResults / actualPerPage);
+        var books = await bookService.GetAllBooksAsync(actualPage, actualPerPage);
+        var response = new IBookResponse(actualPage, actualPerPage, totalResults, totalPages, books);
         return TypedResults.Ok(response);
     }
 

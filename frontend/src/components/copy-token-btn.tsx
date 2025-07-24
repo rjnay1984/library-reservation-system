@@ -7,12 +7,12 @@ export default function CopyTokenButton({ className }: { className?: string }) {
     const { getAccessToken } = authClient;
     try {
       const token = await getAccessToken({ providerId: '2' });
-      if (!token || !token.data || !token.data.accessToken) {
+      if (!token?.data?.accessToken) {
         throw new Error('No access token available');
       }
       navigator.clipboard.writeText(token.data.accessToken);
-    } catch (error) {
-      console.error('Error fetching access token:', error);
+    } catch {
+      alert('Failed to copy access token');
     }
   };
 
