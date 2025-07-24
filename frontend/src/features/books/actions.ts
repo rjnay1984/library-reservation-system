@@ -36,3 +36,27 @@ export const getAllBooks = async (page: number = 1, perPage: number = 20) => {
     throw error;
   }
 };
+
+/**
+ * Fetch a book by its ID from the API.
+ * @param id - The ID of the book to retrieve.
+ * @returns A promise that resolves to the book details.
+ */
+export const getBookById = async (id: string) => {
+  try {
+    const response = await fetch(`${libraryEnv.API_URL}/books/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch book');
+    }
+
+    const data: unknown = await response.json();
+    return bookSchema.parse(data);
+  } catch (error) {
+    throw error;
+  }
+};
