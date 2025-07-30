@@ -2,6 +2,9 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /app
 
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
 COPY *.csproj ./
 RUN dotnet restore
 
@@ -9,5 +12,3 @@ COPY . ./
 
 EXPOSE 5000
 EXPOSE 5001
-
-CMD ["dotnet", "watch", "run", "-lp", "http", "--urls", "http://0.0.0.0:5000"]

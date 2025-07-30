@@ -1,14 +1,4 @@
 services:
-  session-db:
-    image: postgres
-    ports:
-      - 5433:5432
-    volumes:
-      - session-db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=session_db
   frontend:
     build:
       context: .
@@ -28,8 +18,5 @@ services:
       - NEXT_TELEMETRY_DISABLED=1
       - AUTH_URL=http://server:9000
       - NEXT_PUBLIC_AUTH_URL=http://localhost:9000
-      - SESSION_DB_URL=postgres://postgres:postgres@session-db:5432/session_db
+      - SESSION_DB_URL=postgres://postgres:postgres@session-db:5432/sessions
       - API_URL=http://backend:5000
-
-volumes:
-  session-db-data:
