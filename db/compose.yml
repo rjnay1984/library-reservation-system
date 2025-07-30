@@ -1,6 +1,6 @@
 services:
-  postgresql:
-    image: docker.io/library/postgres:16-alpine
+  authentik-db:
+    image: postgres:16-alpine
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
@@ -9,13 +9,36 @@ services:
       retries: 5
       timeout: 5s
     volumes:
-      - database:/var/lib/postgresql/data
+      - auth-db-data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: ${PG_PASS:?database password required}
       POSTGRES_USER: ${PG_USER:-authentik}
       POSTGRES_DB: ${PG_DB:-authentik}
     env_file:
       - ../.env
+
+  library-db:
+    image: postgres:16-alpine
+    ports:
+      - "5434:5432"
+    restart: always
+    volumes:
+      - library-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=library
+      - POSTGRES_PASSWORD=library
+      - POSTGRES_DB=library
+
+  session-db:
+    image: postgres:16-alpine
+    ports:
+      - 5433:5432
+    volumes:
+      - session-db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=sessions
 
   redis:
     image: docker.io/library/redis:alpine
@@ -31,7 +54,11 @@ services:
       - redis:/data
 
 volumes:
-  database:
+  auth-db-data:
+    driver: local
+  library-db-data:
+    driver: local
+  session-db-data:
     driver: local
   redis:
     driver: local

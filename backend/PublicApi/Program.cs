@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddCors();
 builder.Services.AddDbContext<LibraryDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("LibraryDb")));
+    options.UseNpgsql(Environment.GetEnvironmentVariable("DB_URL")));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // Register services
